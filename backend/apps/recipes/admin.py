@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import (
     Category, Ingredient, Recipe, RecipeIngredient, RecipeStep,
     RecipeImage, RecipeRating, CookSnap, RecipeFolder, SavedRecipe,
-    MealPlan, ShoppingList, ShoppingListItem
+    MealPlan, ShoppingList, ShoppingListItem, Challenge, ChallengeEntry, RecipeVote
 )
 
 
@@ -113,3 +113,84 @@ class ShoppingListItemAdmin(admin.ModelAdmin):
     list_display = ('ingredient', 'quantity', 'unit', 'shopping_list', 'is_purchased')
     list_filter = ('is_purchased',)
     search_fields = ('ingredient__name', 'shopping_list__name')
+
+
+class ChallengeEntryInline(admin.TabularInline):
+    model = ChallengeEntry
+    extra = 0
+    readonly_fields = ('votes_count', 'ranking')
+    fields = ('recipe', 'user', 'votes_count', 'ranking', 'submission_notes')
+
+
+@admin.register(Challenge)
+class ChallengeAdmin(admin.ModelAdmin):
+    list_display = ('title', 'theme', 'status', 'start_date', 'end_date', 'participants_count', 'total_votes', 'winner_recipe')
+    list_filter = ('status', 'is_premium_only', 'start_date')
+    search_fields = ('title', 'title_ar', 'theme', 'theme_ar')
+    readonly_fields = ('participants_count', 'total_votes', 'created_at', 'updated_at')
+    inlines = [ChallengeEntryInline]
+
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('title', 'title_ar', 'description', 'description_ar', 'theme', 'theme_ar')
+        }),
+        ('Timing', {
+            'fields': ('start_date', 'end_date', 'voting_end_date', 'status')
+        }),
+        ('Results', {
+            'fields': ('winner_recipe', 'participants_count', 'total_votes')
+        }),
+        ('Settings', {
+            'fields': ('max_entries_per_user', 'is_premium_only')
+        }),
+        ('Prize', {
+            'fields': ('prize_description', 'prize_description_ar'),
+            'classes': ('collapse',)
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    actions = ['process_challenges']
+
+    def process_challenges(self, request, queryset):
+        """Admin action to process selected challenges"""
+        from django.core.management import call_command
+        call_command('process_challenges')
+        self.message_user(request, "Challenges processed successfully!")
+    process_challenges.short_description = "Process selected challenges (update status, select winners)"
+
+
+@admin.register(ChallengeEntry)
+class ChallengeEntryAdmin(admin.ModelAdmin):
+    list_display = ('recipe', 'challenge', 'user', 'votes_count', 'ranking', 'created_at')
+    list_filter = ('challenge', 'created_at')
+    search_fields = ('recipe__title', 'user__username', 'challenge__title')
+    readonly_fields = ('votes_count', 'ranking', 'created_at', 'updated_at')
+
+    fieldsets = (
+        ('Entry Information', {
+            'fields': ('challenge', 'recipe', 'user', 'submission_notes')
+        }),
+        ('Stats', {
+            'fields': ('votes_count', 'ranking')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(RecipeVote)
+class RecipeVoteAdmin(admin.ModelAdmin):
+    list_display = ('challenge', 'entry', 'user', 'created_at')
+    list_filter = ('challenge', 'created_at')
+    search_fields = ('user__username', 'challenge__title', 'entry__recipe__title')
+    readonly_fields = ('created_at',)
+
+    def has_change_permission(self, request, obj=None):
+        # Votes cannot be edited, only viewed or deleted
+        return False

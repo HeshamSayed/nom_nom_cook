@@ -31,6 +31,7 @@ class RecipeModel {
   final double ratingAverage;
   final int ratingCount;
   final bool isFeatured;
+  final bool isPremiumOnly;
   final bool isLiked;
   final bool isSaved;
   final DateTime createdAt;
@@ -66,6 +67,7 @@ class RecipeModel {
     required this.ratingAverage,
     required this.ratingCount,
     required this.isFeatured,
+    this.isPremiumOnly = false,
     this.isLiked = false,
     this.isSaved = false,
     required this.createdAt,
@@ -113,6 +115,7 @@ class RecipeModel {
       ratingAverage: (json['rating_average'] ?? 0.0).toDouble(),
       ratingCount: json['rating_count'] ?? 0,
       isFeatured: json['is_featured'] ?? false,
+      isPremiumOnly: json['is_premium_only'] ?? false,
       isLiked: json['is_liked'] ?? false,
       isSaved: json['is_saved'] ?? false,
       createdAt: DateTime.parse(json['created_at']),

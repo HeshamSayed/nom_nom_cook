@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../models/challenge_model.dart';
+import '../../providers/challenge_provider.dart';
+import '../../widgets/custom_empty_state.dart';
+import '../../widgets/animated_loading.dart';
 import 'challenge_detail_screen.dart';
 
 class ChallengesScreen extends StatefulWidget {
@@ -12,12 +16,6 @@ class ChallengesScreen extends StatefulWidget {
 class _ChallengesScreenState extends State<ChallengesScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  bool _isLoading = true;
-
-  List<ChallengeModel> _activeChallenges = [];
-  List<ChallengeModel> _upcomingChallenges = [];
-  List<ChallengeModel> _votingChallenges = [];
-  List<ChallengeModel> _completedChallenges = [];
 
   @override
   void initState() {
@@ -33,17 +31,7 @@ class _ChallengesScreenState extends State<ChallengesScreen>
   }
 
   Future<void> _loadChallenges() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    // TODO: Load from API
-    // For now, using mock data
-    await Future.delayed(const Duration(seconds: 1));
-
-    setState(() {
-      _isLoading = false;
-    });
+    await context.read<ChallengeProvider>().fetchChallenges();
   }
 
   @override
@@ -62,17 +50,45 @@ class _ChallengesScreenState extends State<ChallengesScreen>
           ],
         ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : TabBarView(
-              controller: _tabController,
-              children: [
-                _buildChallengesList(_activeChallenges, 'active'),
-                _buildChallengesList(_votingChallenges, 'voting'),
-                _buildChallengesList(_upcomingChallenges, 'upcoming'),
-                _buildChallengesList(_completedChallenges, 'completed'),
-              ],
-            ),
+      body: Consumer<ChallengeProvider>(
+        builder: (context, challengeProvider, _) {
+          if (challengeProvider.isLoading && challengeProvider.challenges.isEmpty) {
+            return const AnimatedLoading(message: 'Loading challenges...');
+          }
+
+          if (challengeProvider.error != null && challengeProvider.challenges.isEmpty) {
+            return CustomEmptyState(
+              emoji: '😞',
+              title: 'Oops!',
+              subtitle: challengeProvider.error!,
+              actionText: 'Try Again',
+              onAction: _loadChallenges,
+            );
+          }
+
+          return TabBarView(
+            controller: _tabController,
+            children: [
+              _buildChallengesList(
+                challengeProvider.getChallengesByStatus('active'),
+                'active',
+              ),
+              _buildChallengesList(
+                challengeProvider.getChallengesByStatus('voting'),
+                'voting',
+              ),
+              _buildChallengesList(
+                challengeProvider.getChallengesByStatus('upcoming'),
+                'upcoming',
+              ),
+              _buildChallengesList(
+                challengeProvider.getChallengesByStatus('completed'),
+                'completed',
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 
@@ -123,31 +139,10 @@ class _ChallengesScreenState extends State<ChallengesScreen>
         subtitle = 'Stay tuned!';
     }
 
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            emoji,
-            style: const TextStyle(fontSize: 64),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            title,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            subtitle,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey[600],
-                ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
+    return CustomEmptyState(
+      emoji: emoji,
+      title: title,
+      subtitle: subtitle,
     );
   }
 

@@ -8,6 +8,7 @@ import 'providers/auth_provider.dart';
 import 'providers/recipe_provider.dart';
 import 'providers/user_provider.dart';
 import 'providers/subscription_provider.dart';
+import 'providers/challenge_provider.dart';
 import 'screens/splash/splash_screen.dart';
 
 void main() async {
@@ -30,6 +31,7 @@ class NomNomCookApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => RecipeProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => SubscriptionProvider()),
+        ChangeNotifierProvider(create: (_) => ChallengeProvider()),
       ],
       child: Consumer<AuthProvider>(
         builder: (context, authProvider, _) {

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/recipe_provider.dart';
 import '../../providers/auth_provider.dart';
-import '../../widgets/recipe_card.dart';
+import '../../widgets/enhanced_recipe_card.dart';
 import '../../widgets/animated_loading.dart';
 import '../../widgets/custom_empty_state.dart';
 import '../../widgets/custom_bottom_nav.dart';
@@ -142,10 +142,12 @@ class _HomeScreenState extends State<HomeScreen> {
               }
 
               final recipe = recipeProvider.recipes[index];
-              return RecipeCard(
+              return EnhancedRecipeCard(
                 recipe: recipe,
                 onLike: () => _handleLike(recipe.id),
                 onSave: () => _handleSave(recipe.id),
+                isLiked: recipe.isLiked,
+                isSaved: recipe.isSaved,
               );
             },
           ),

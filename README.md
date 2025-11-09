@@ -1,6 +1,6 @@
-# Cookpad Egypt - Recipe Sharing Platform
+# Nom Nom Cook - Recipe Sharing Platform
 
-> A comprehensive recipe sharing platform for the Egyptian market, built with Django REST Framework and Flutter.
+> A vibrant recipe sharing platform with monthly challenges and community voting, built with Django REST Framework and Flutter.
 
 ## 📋 Table of Contents
 
@@ -19,15 +19,16 @@
 
 ## 🎯 Overview
 
-Cookpad Egypt is a localized recipe-sharing platform designed specifically for the Egyptian market. It enables home cooks to share recipes, connect with other food enthusiasts, plan meals, and discover new Egyptian and international cuisines.
+Nom Nom Cook is a vibrant recipe-sharing platform designed for food enthusiasts who love to cook, share, and compete. With monthly cooking challenges, community voting, meal planning, and premium features, it brings together home cooks in an engaging and competitive environment.
 
 ### Key Highlights
 
-- **100M+ MAU globally** (Cookpad platform)
-- **4M+ recipes** created by users worldwide
-- **70+ countries**, 23 languages supported
-- **Egyptian market focus** with localized features
-- **Community-first approach** for home cooks
+- **Monthly Cooking Challenges** - Compete with themed challenges
+- **Community Voting System** - Vote for your favorite recipes
+- **Automatic Winner Selection** - Winners chosen based on community votes
+- **Egyptian Market Focus** - Localized features and content
+- **Premium Subscription** - EGP 29/month (Individual) or EGP 79/month (Family)
+- **Community-First Approach** - Built for home cooks
 
 ## ✨ Features
 
@@ -55,13 +56,24 @@ Cookpad Egypt is a localized recipe-sharing platform designed specifically for t
 - ✅ Recipe folders and organization
 - ✅ Offline recipe access
 
+#### Monthly Challenges 🏆
+- ✅ Theme-based cooking competitions
+- ✅ Recipe submission system
+- ✅ Community voting (one vote per challenge)
+- ✅ Automatic winner selection
+- ✅ Leaderboard with rankings
+- ✅ Prize descriptions
+- ✅ Challenge phases: upcoming → active → voting → completed
+- ✅ Winner announcement screen
+
 #### Premium Features
 - ✅ Ad-free experience
-- ✅ Unlimited recipe saves (up to 3000)
-- ✅ Popular recipes priority
-- ✅ Nutritional information
-- ✅ Advanced search filters
+- ✅ Unlimited recipe saves and folders
+- ✅ Unlimited meal planning
+- ✅ Smart shopping lists
 - ✅ Exclusive content access
+- ✅ Priority support
+- ✅ Offline access
 
 #### Egyptian Market Specific
 - ✅ Arabic/English bilingual support
@@ -379,6 +391,15 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for production deployment instructions.
 - `POST /api/v1/subscriptions/subscriptions/subscribe/` - Create subscription
 - `POST /api/v1/subscriptions/subscriptions/{id}/cancel/` - Cancel subscription
 
+#### Challenges
+- `GET /api/v1/recipes/challenges/` - List challenges
+- `GET /api/v1/recipes/challenges/{id}/` - Get challenge details
+- `GET /api/v1/recipes/challenges/{id}/entries/` - Get challenge entries
+- `GET /api/v1/recipes/challenges/{id}/leaderboard/` - Get leaderboard
+- `POST /api/v1/recipes/challenge-entries/` - Submit recipe to challenge
+- `POST /api/v1/recipes/challenge-votes/` - Vote for a recipe
+- `DELETE /api/v1/recipes/challenge-votes/{id}/` - Delete vote
+
 ### Interactive API Documentation
 
 Visit `http://localhost:8000/api/docs/` for interactive Swagger UI documentation.
@@ -453,12 +474,23 @@ recipes = Recipe.objects.filter(
 )
 ```
 
+### Monthly Challenges System
+
+```python
+# Backend: Automatic challenge processing
+python manage.py process_challenges
+
+# Challenge statuses: upcoming → active → voting → completed
+# Winner selection based on highest votes
+# One vote per user per challenge
+```
+
 ### Premium Subscription Model
 
 ```python
-# EGP 49-79/month individual plan
-# EGP 149/month family plan (up to 5 members)
-# Features: Unlimited saves, ad-free, popular recipes, nutritional info
+# EGP 29/month individual plan
+# EGP 79/month family plan (up to 6 members)
+# Features: Unlimited saves, ad-free, exclusive content, priority support
 ```
 
 ### Real-time Chat
