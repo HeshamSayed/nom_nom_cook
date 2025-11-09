@@ -436,3 +436,145 @@ class ShoppingListItem(models.Model):
 
     def __str__(self):
         return f"{self.quantity} {self.unit} {self.ingredient.name}"
+
+
+class Challenge(models.Model):
+    """
+    Monthly cooking challenges where users compete with their recipes
+    """
+    STATUS_CHOICES = [
+        ('upcoming', 'Upcoming'),
+        ('active', 'Active'),
+        ('voting', 'Voting Phase'),
+        ('completed', 'Completed'),
+    ]
+
+    title = models.CharField(_('title'), max_length=200)
+    title_ar = models.CharField(_('title in Arabic'), max_length=200, blank=True)
+    description = models.TextField(_('description'))
+    description_ar = models.TextField(_('description in Arabic'), blank=True)
+
+    # Challenge theme/category
+    theme = models.CharField(_('theme'), max_length=100, help_text=_('e.g., "Best Egyptian Dessert", "Healthy Breakfast"'))
+    theme_ar = models.CharField(_('theme in Arabic'), max_length=100, blank=True)
+
+    # Challenge timing
+    start_date = models.DateTimeField(_('start date'))
+    end_date = models.DateTimeField(_('end date'))
+    voting_end_date = models.DateTimeField(_('voting end date'))
+
+    # Status
+    status = models.CharField(_('status'), max_length=20, choices=STATUS_CHOICES, default='upcoming')
+
+    # Winner
+    winner_recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='won_challenges'
+    )
+
+    # Stats
+    participants_count = models.PositiveIntegerField(_('participants count'), default=0)
+    total_votes = models.PositiveIntegerField(_('total votes'), default=0)
+
+    # Settings
+    max_entries_per_user = models.PositiveIntegerField(_('max entries per user'), default=1)
+    is_premium_only = models.BooleanField(_('premium only'), default=False)
+
+    # Prize/Reward
+    prize_description = models.TextField(_('prize description'), blank=True)
+    prize_description_ar = models.TextField(_('prize description in Arabic'), blank=True)
+
+    created_at = models.DateTimeField(_('created at'), auto_now_add=True)
+    updated_at = models.DateTimeField(_('updated at'), auto_now=True)
+
+    class Meta:
+        verbose_name = _('challenge')
+        verbose_name_plural = _('challenges')
+        ordering = ['-start_date']
+        indexes = [
+            models.Index(fields=['status', '-start_date']),
+        ]
+
+    def __str__(self):
+        return f"{self.title} ({self.start_date.strftime('%B %Y')})"
+
+
+class ChallengeEntry(models.Model):
+    """
+    Recipe submissions for challenges
+    """
+    challenge = models.ForeignKey(
+        Challenge,
+        on_delete=models.CASCADE,
+        related_name='entries'
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='challenge_entries'
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='challenge_entries'
+    )
+
+    # Stats
+    votes_count = models.PositiveIntegerField(_('votes count'), default=0)
+    ranking = models.PositiveIntegerField(_('ranking'), null=True, blank=True)
+
+    # Entry details
+    submission_notes = models.TextField(_('submission notes'), blank=True)
+
+    created_at = models.DateTimeField(_('created at'), auto_now_add=True)
+    updated_at = models.DateTimeField(_('updated at'), auto_now=True)
+
+    class Meta:
+        verbose_name = _('challenge entry')
+        verbose_name_plural = _('challenge entries')
+        unique_together = ('challenge', 'recipe')
+        ordering = ['-votes_count', '-created_at']
+        indexes = [
+            models.Index(fields=['challenge', '-votes_count']),
+        ]
+
+    def __str__(self):
+        return f"{self.recipe.title} in {self.challenge.title}"
+
+
+class RecipeVote(models.Model):
+    """
+    User votes for recipes in challenges
+    """
+    challenge = models.ForeignKey(
+        Challenge,
+        on_delete=models.CASCADE,
+        related_name='votes'
+    )
+    entry = models.ForeignKey(
+        ChallengeEntry,
+        on_delete=models.CASCADE,
+        related_name='votes'
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='challenge_votes'
+    )
+
+    created_at = models.DateTimeField(_('created at'), auto_now_add=True)
+
+    class Meta:
+        verbose_name = _('recipe vote')
+        verbose_name_plural = _('recipe votes')
+        unique_together = ('challenge', 'user')  # One vote per user per challenge
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['challenge', 'entry']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} voted for {self.entry.recipe.title}"

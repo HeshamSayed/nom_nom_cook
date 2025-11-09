@@ -1,5 +1,5 @@
-name: cookpad_egypt
-description: Cookpad Egypt - Recipe sharing platform for Egyptian home cooks
+name: nom_nom_cook
+description: Nom Nom Cook - Recipe sharing platform with monthly challenges and community voting
 publish_to: 'none'
 version: 1.0.0+1
 

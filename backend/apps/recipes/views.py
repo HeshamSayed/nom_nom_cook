@@ -9,13 +9,15 @@ from django.db.models import Q
 from django.utils import timezone
 from .models import (
     Category, Ingredient, Recipe, RecipeRating, CookSnap,
-    RecipeFolder, SavedRecipe, MealPlan, ShoppingList, ShoppingListItem
+    RecipeFolder, SavedRecipe, MealPlan, ShoppingList, ShoppingListItem,
+    Challenge, ChallengeEntry, RecipeVote
 )
 from .serializers import (
     CategorySerializer, IngredientSerializer, RecipeListSerializer,
     RecipeDetailSerializer, RecipeCreateUpdateSerializer, RecipeRatingSerializer,
     CookSnapSerializer, RecipeFolderSerializer, SavedRecipeSerializer,
-    MealPlanSerializer, ShoppingListSerializer, ShoppingListItemSerializer
+    MealPlanSerializer, ShoppingListSerializer, ShoppingListItemSerializer,
+    ChallengeSerializer, ChallengeEntrySerializer, RecipeVoteSerializer
 )
 from .filters import RecipeFilter
 
@@ -443,5 +445,159 @@ class ShoppingListViewSet(viewsets.ModelViewSet):
         except ShoppingListItem.DoesNotExist:
             return Response(
                 {'error': 'Item not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+
+class ChallengeViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet for challenges - users can list and retrieve challenges
+    """
+    queryset = Challenge.objects.all()
+    serializer_class = ChallengeSerializer
+    permission_classes = [permissions.AllowAny]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_fields = ['status']
+    ordering_fields = ['start_date', 'participants_count', 'total_votes']
+    ordering = ['-start_date']
+
+    @action(detail=True, methods=['get'])
+    def entries(self, request, pk=None):
+        """Get all entries for a challenge"""
+        challenge = self.get_object()
+        entries = challenge.entries.select_related('recipe', 'user').all()
+        serializer = ChallengeEntrySerializer(
+            entries,
+            many=True,
+            context={'request': request}
+        )
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['get'])
+    def leaderboard(self, request, pk=None):
+        """Get leaderboard (top entries by votes)"""
+        challenge = self.get_object()
+        entries = challenge.entries.select_related('recipe', 'user').order_by('-votes_count')[:10]
+        serializer = ChallengeEntrySerializer(
+            entries,
+            many=True,
+            context={'request': request}
+        )
+        return Response(serializer.data)
+
+
+class ChallengeEntryViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for challenge entries - users can submit and manage their entries
+    """
+    queryset = ChallengeEntry.objects.all()
+    serializer_class = ChallengeEntrySerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        challenge_id = self.request.query_params.get('challenge')
+        if challenge_id:
+            queryset = queryset.filter(challenge_id=challenge_id)
+        return queryset.select_related('recipe', 'user', 'challenge')
+
+    def perform_create(self, serializer):
+        challenge = serializer.validated_data['challenge']
+
+        # Check if challenge is accepting entries
+        if challenge.status != 'active':
+            raise serializers.ValidationError('Challenge is not accepting entries')
+
+        # Check if user has reached max entries
+        user_entries = ChallengeEntry.objects.filter(
+            challenge=challenge,
+            user=self.request.user
+        ).count()
+        if user_entries >= challenge.max_entries_per_user:
+            raise serializers.ValidationError(
+                f'You can only submit {challenge.max_entries_per_user} entry(ies) per challenge'
+            )
+
+        # Check if recipe is already submitted
+        if ChallengeEntry.objects.filter(
+            challenge=challenge,
+            recipe=serializer.validated_data['recipe']
+        ).exists():
+            raise serializers.ValidationError('This recipe is already submitted to this challenge')
+
+        serializer.save(user=self.request.user)
+
+
+class RecipeVoteViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for voting on challenge entries
+    """
+    queryset = RecipeVote.objects.all()
+    serializer_class = RecipeVoteSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    http_method_names = ['get', 'post', 'delete']
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        challenge_id = self.request.query_params.get('challenge')
+        if challenge_id:
+            queryset = queryset.filter(challenge_id=challenge_id)
+        return queryset.select_related('entry', 'user', 'challenge')
+
+    def perform_create(self, serializer):
+        challenge = serializer.validated_data['challenge']
+
+        # Check if challenge is in voting phase
+        if challenge.status != 'voting':
+            raise serializers.ValidationError('Challenge is not in voting phase')
+
+        # Check if user already voted
+        if RecipeVote.objects.filter(
+            challenge=challenge,
+            user=self.request.user
+        ).exists():
+            raise serializers.ValidationError('You have already voted in this challenge')
+
+        # Check if user is voting for their own entry
+        entry = serializer.validated_data['entry']
+        if entry.user == self.request.user:
+            raise serializers.ValidationError('You cannot vote for your own entry')
+
+        serializer.save(user=self.request.user)
+
+    @action(detail=False, methods=['delete'])
+    def remove_vote(self, request):
+        """Remove user's vote from a challenge"""
+        challenge_id = request.data.get('challenge_id')
+        if not challenge_id:
+            return Response(
+                {'error': 'challenge_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            vote = RecipeVote.objects.get(
+                challenge_id=challenge_id,
+                user=request.user
+            )
+
+            # Update counts
+            entry = vote.entry
+            entry.votes_count = max(0, entry.votes_count - 1)
+            entry.save()
+
+            challenge = vote.challenge
+            challenge.total_votes = max(0, challenge.total_votes - 1)
+            challenge.save()
+
+            vote.delete()
+
+            return Response(
+                {'message': 'Vote removed successfully'},
+                status=status.HTTP_204_NO_CONTENT
+            )
+        except RecipeVote.DoesNotExist:
+            return Response(
+                {'error': 'Vote not found'},
                 status=status.HTTP_404_NOT_FOUND
             )

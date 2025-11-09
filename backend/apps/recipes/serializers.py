@@ -5,7 +5,7 @@ from rest_framework import serializers
 from .models import (
     Category, Ingredient, Recipe, RecipeIngredient, RecipeStep,
     RecipeImage, RecipeRating, CookSnap, RecipeFolder, SavedRecipe,
-    MealPlan, ShoppingList, ShoppingListItem
+    MealPlan, ShoppingList, ShoppingListItem, Challenge, ChallengeEntry, RecipeVote
 )
 from apps.users.serializers import UserSerializer
 
@@ -303,3 +303,131 @@ class ShoppingListSerializer(serializers.ModelSerializer):
 
     def get_purchased_count(self, obj):
         return obj.items.filter(is_purchased=True).count()
+
+
+class ChallengeSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Challenge model
+    """
+    winner_recipe = RecipeSerializer(read_only=True)
+    is_user_participating = serializers.SerializerMethodField()
+    user_vote = serializers.SerializerMethodField()
+    time_remaining = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Challenge
+        fields = [
+            'id', 'title', 'title_ar', 'description', 'description_ar',
+            'theme', 'theme_ar', 'start_date', 'end_date', 'voting_end_date',
+            'status', 'winner_recipe', 'participants_count', 'total_votes',
+            'max_entries_per_user', 'is_premium_only', 'prize_description',
+            'prize_description_ar', 'created_at', 'updated_at',
+            'is_user_participating', 'user_vote', 'time_remaining'
+        ]
+        read_only_fields = ['id', 'status', 'winner_recipe', 'participants_count', 'total_votes', 'created_at', 'updated_at']
+
+    def get_is_user_participating(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.entries.filter(user=request.user).exists()
+        return False
+
+    def get_user_vote(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            vote = obj.votes.filter(user=request.user).first()
+            if vote:
+                return vote.entry.id
+        return None
+
+    def get_time_remaining(self, obj):
+        from django.utils import timezone
+        now = timezone.now()
+
+        if obj.status == 'active':
+            delta = obj.end_date - now
+        elif obj.status == 'voting':
+            delta = obj.voting_end_date - now
+        else:
+            return None
+
+        if delta.total_seconds() > 0:
+            days = delta.days
+            hours = delta.seconds // 3600
+            return {'days': days, 'hours': hours}
+        return None
+
+
+class ChallengeEntrySerializer(serializers.ModelSerializer):
+    """
+    Serializer for ChallengeEntry model
+    """
+    recipe = RecipeSerializer(read_only=True)
+    recipe_id = serializers.PrimaryKeyRelatedField(
+        queryset=Recipe.objects.all(),
+        source='recipe',
+        write_only=True
+    )
+    user = UserSerializer(read_only=True)
+    has_voted = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ChallengeEntry
+        fields = [
+            'id', 'challenge', 'recipe', 'recipe_id', 'user',
+            'votes_count', 'ranking', 'submission_notes',
+            'created_at', 'updated_at', 'has_voted'
+        ]
+        read_only_fields = ['id', 'user', 'votes_count', 'ranking', 'created_at', 'updated_at']
+
+    def get_has_voted(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.votes.filter(user=request.user).exists()
+        return False
+
+    def create(self, validated_data):
+        # Set the user from the request
+        request = self.context.get('request')
+        validated_data['user'] = request.user
+
+        # Update participants count
+        challenge = validated_data['challenge']
+        challenge.participants_count = challenge.entries.count() + 1
+        challenge.save()
+
+        return super().create(validated_data)
+
+
+class RecipeVoteSerializer(serializers.ModelSerializer):
+    """
+    Serializer for RecipeVote model
+    """
+    user = UserSerializer(read_only=True)
+    entry = ChallengeEntrySerializer(read_only=True)
+    entry_id = serializers.PrimaryKeyRelatedField(
+        queryset=ChallengeEntry.objects.all(),
+        source='entry',
+        write_only=True
+    )
+
+    class Meta:
+        model = RecipeVote
+        fields = ['id', 'challenge', 'entry', 'entry_id', 'user', 'created_at']
+        read_only_fields = ['id', 'user', 'created_at']
+
+    def create(self, validated_data):
+        # Set the user from the request
+        request = self.context.get('request')
+        validated_data['user'] = request.user
+
+        # Update vote counts
+        entry = validated_data['entry']
+        entry.votes_count = entry.votes.count() + 1
+        entry.save()
+
+        challenge = validated_data['challenge']
+        challenge.total_votes = challenge.votes.count() + 1
+        challenge.save()
+
+        return super().create(validated_data)

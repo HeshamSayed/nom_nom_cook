@@ -363,7 +363,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               ListTile(
                 leading: const Icon(Icons.info),
-                title: const Text('About Cookpad Egypt'),
+                title: const Text('About Nom Nom Cook'),
                 subtitle: const Text('Version 1.0.0'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
@@ -377,7 +377,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 onTap: () {
                   _showInfoDialog(
                     'Help & Support',
-                    'Need help? Contact us at support@cookpad-egypt.com or visit our FAQ section.',
+                    'Need help? Contact us at support@nomnomcook.com or visit our FAQ section.',
                   );
                 },
               ),
@@ -701,14 +701,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('About Cookpad Egypt'),
+        title: const Text('About Nom Nom Cook'),
         content: const SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Cookpad Egypt',
+                'Nom Nom Cook',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -718,11 +718,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Text('Version 1.0.0'),
               SizedBox(height: 16),
               Text(
-                'Cookpad Egypt is your home cooking companion. Share recipes, connect with food lovers, and discover the joy of cooking.',
+                'Nom Nom Cook is your home cooking companion. Share recipes, compete in monthly challenges, vote for your favorites, and discover the joy of cooking together!',
               ),
               SizedBox(height: 16),
               Text(
-                '© 2024 Cookpad Egypt. All rights reserved.',
+                '© 2024 Nom Nom Cook. All rights reserved.',
                 style: TextStyle(fontSize: 12),
               ),
             ],

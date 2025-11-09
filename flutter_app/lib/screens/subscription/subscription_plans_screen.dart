@@ -126,7 +126,7 @@ class SubscriptionPlansScreen extends StatelessWidget {
               context,
               planType: 'individual',
               title: 'Individual',
-              price: 'EGP 49',
+              price: 'EGP 29',
               period: '/month',
               features: [
                 'All premium features',
@@ -146,7 +146,7 @@ class SubscriptionPlansScreen extends StatelessWidget {
               context,
               planType: 'family',
               title: 'Family',
-              price: 'EGP 149',
+              price: 'EGP 79',
               period: '/month',
               features: [
                 'All premium features',
