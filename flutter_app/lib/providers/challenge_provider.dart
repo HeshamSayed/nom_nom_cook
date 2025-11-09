@@ -30,7 +30,7 @@ class ChallengeProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final data = await _apiService.get('/challenges/');
+      final data = await _apiService.get('/recipes/challenges/');
       _challenges = (data as List)
           .map((json) => ChallengeModel.fromJson(json))
           .toList();
@@ -51,7 +51,7 @@ class ChallengeProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final data = await _apiService.get('/challenges/$challengeId/');
+      final data = await _apiService.get('/recipes/challenges/$challengeId/');
       _selectedChallenge = ChallengeModel.fromJson(data);
       _error = null;
     } catch (e) {
@@ -70,7 +70,7 @@ class ChallengeProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final data = await _apiService.get('/challenges/$challengeId/entries/');
+      final data = await _apiService.get('/recipes/challenges/$challengeId/entries/');
       _currentChallengeEntries = (data as List)
           .map((json) => ChallengeEntryModel.fromJson(json))
           .toList();
@@ -87,7 +87,7 @@ class ChallengeProvider with ChangeNotifier {
   // Fetch challenge leaderboard
   Future<List<ChallengeEntryModel>> fetchChallengeLeaderboard(int challengeId) async {
     try {
-      final data = await _apiService.get('/challenges/$challengeId/leaderboard/');
+      final data = await _apiService.get('/recipes/challenges/$challengeId/leaderboard/');
       return (data as List)
           .map((json) => ChallengeEntryModel.fromJson(json))
           .toList();
@@ -104,7 +104,7 @@ class ChallengeProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      await _apiService.post('/challenge-entries/', {
+      await _apiService.post('/recipes/challenge-entries/', {
         'challenge': challengeId,
         'recipe': recipeId,
       });
@@ -132,7 +132,7 @@ class ChallengeProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      await _apiService.post('/challenge-votes/', {
+      await _apiService.post('/recipes/challenge-votes/', {
         'challenge': challengeId,
         'entry': entryId,
       });
@@ -156,7 +156,7 @@ class ChallengeProvider with ChangeNotifier {
   // Delete vote (if user wants to change vote)
   Future<bool> deleteVote(int voteId) async {
     try {
-      await _apiService.delete('/challenge-votes/$voteId/');
+      await _apiService.delete('/recipes/challenge-votes/$voteId/');
       return true;
     } catch (e) {
       debugPrint('Error deleting vote: $e');

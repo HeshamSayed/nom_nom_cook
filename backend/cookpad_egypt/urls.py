@@ -28,6 +28,6 @@ if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 # Admin site customization
-admin.site.site_header = "Cookpad Egypt Administration"
-admin.site.site_title = "Cookpad Egypt Admin"
-admin.site.index_title = "Welcome to Cookpad Egypt Administration"
+admin.site.site_header = "Nom Nom Cook Administration"
+admin.site.site_title = "Nom Nom Cook Admin"
+admin.site.index_title = "Welcome to Nom Nom Cook Administration"

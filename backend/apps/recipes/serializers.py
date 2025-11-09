@@ -85,12 +85,12 @@ class RecipeListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = [
-            'id', 'title', 'title_ar', 'description', 'author', 'category',
-            'main_image', 'prep_time', 'cook_time', 'servings', 'difficulty',
+            'id', 'title', 'title_ar', 'description', 'description_ar', 'author', 'category',
+            'tags', 'main_image', 'prep_time', 'cook_time', 'servings', 'difficulty',
             'is_vegan', 'is_vegetarian', 'is_gluten_free', 'is_dairy_free',
-            'is_keto', 'is_halal', 'rating_average', 'rating_count',
+            'is_keto', 'is_halal', 'calories', 'rating_average', 'rating_count',
             'views_count', 'likes_count', 'saves_count', 'cooksnaps_count',
-            'is_featured', 'created_at', 'is_liked', 'is_saved'
+            'is_featured', 'is_premium_only', 'created_at', 'is_liked', 'is_saved'
         ]
 
     def get_is_liked(self, obj):
@@ -309,7 +309,7 @@ class ChallengeSerializer(serializers.ModelSerializer):
     """
     Serializer for Challenge model
     """
-    winner_recipe = RecipeSerializer(read_only=True)
+    winner_recipe = RecipeListSerializer(read_only=True)
     is_user_participating = serializers.SerializerMethodField()
     user_vote = serializers.SerializerMethodField()
     time_remaining = serializers.SerializerMethodField()
@@ -362,7 +362,7 @@ class ChallengeEntrySerializer(serializers.ModelSerializer):
     """
     Serializer for ChallengeEntry model
     """
-    recipe = RecipeSerializer(read_only=True)
+    recipe = RecipeListSerializer(read_only=True)
     recipe_id = serializers.PrimaryKeyRelatedField(
         queryset=Recipe.objects.all(),
         source='recipe',
