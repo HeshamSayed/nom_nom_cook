@@ -3,12 +3,14 @@ import 'package:provider/provider.dart';
 import '../../providers/recipe_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/recipe_card.dart';
-import '../../widgets/loading_indicator.dart';
-import '../../widgets/empty_state.dart';
-import '../../widgets/error_view.dart';
+import '../../widgets/animated_loading.dart';
+import '../../widgets/custom_empty_state.dart';
+import '../../widgets/custom_bottom_nav.dart';
+import '../../theme/app_colors.dart';
 import '../recipe/recipe_search_screen.dart';
 import '../recipe/recipe_create_screen.dart';
-import '../saved/saved_recipes_screen.dart';
+import '../challenges/challenges_screen.dart';
+import '../meal_plan/meal_plan_screen.dart';
 import '../profile/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -21,10 +23,43 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   final ScrollController _scrollController = ScrollController();
+  late final List<CustomBottomNavItem> _navItems;
 
   @override
   void initState() {
     super.initState();
+    _navItems = [
+      CustomBottomNavItem(
+        icon: Icons.restaurant_menu_outlined,
+        activeIcon: Icons.restaurant_menu,
+        label: 'Recipes',
+        screen: _buildRecipeFeedScreen(),
+      ),
+      CustomBottomNavItem(
+        icon: Icons.search_outlined,
+        activeIcon: Icons.search,
+        label: 'Search',
+        screen: const RecipeSearchScreen(),
+      ),
+      CustomBottomNavItem(
+        icon: Icons.emoji_events_outlined,
+        activeIcon: Icons.emoji_events,
+        label: 'Challenges',
+        screen: const ChallengesScreen(),
+      ),
+      CustomBottomNavItem(
+        icon: Icons.calendar_today_outlined,
+        activeIcon: Icons.calendar_today,
+        label: 'Meal Plan',
+        screen: const MealPlanScreen(),
+      ),
+      CustomBottomNavItem(
+        icon: Icons.person_outline,
+        activeIcon: Icons.person,
+        label: 'Profile',
+        screen: const ProfileScreen(),
+      ),
+    ];
     _loadRecipes();
     _scrollController.addListener(_onScroll);
   }
@@ -58,29 +93,32 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadRecipes(); // Refresh
   }
 
-  Widget _buildRecipeFeed() {
+  Widget _buildRecipeFeedScreen() {
     return Consumer<RecipeProvider>(
       builder: (context, recipeProvider, _) {
         if (recipeProvider.isLoading && recipeProvider.recipes.isEmpty) {
-          return const LoadingIndicator(message: 'Loading delicious recipes...');
+          return const AnimatedLoading(message: 'Loading delicious recipes...');
         }
 
         if (recipeProvider.error != null && recipeProvider.recipes.isEmpty) {
-          return ErrorView(
-            message: recipeProvider.error!,
-            onRetry: _loadRecipes,
+          return CustomEmptyState(
+            emoji: '😞',
+            title: 'Oops!',
+            subtitle: recipeProvider.error!,
+            actionText: 'Try Again',
+            onAction: _loadRecipes,
           );
         }
 
         if (recipeProvider.recipes.isEmpty) {
-          return EmptyState(
-            icon: Icons.restaurant_menu,
+          return CustomEmptyState(
+            emoji: '🍳',
             title: 'No Recipes Yet',
-            message: 'Be the first to share a recipe!',
-            actionLabel: 'Create Recipe',
+            subtitle: 'Be the first to share a delicious recipe with our community!',
+            actionText: 'Create Your First Recipe',
             onAction: () {
               setState(() {
-                _selectedIndex = 2; // Navigate to create
+                _selectedIndex = 1; // Navigate to create
               });
             },
           );
@@ -118,18 +156,36 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screens = [
-      _buildRecipeFeed(),
-      const RecipeSearchScreen(),
-      const RecipeCreateScreen(),
-      const SavedRecipesScreen(),
-      const ProfileScreen(),
-    ];
-
     return Scaffold(
       appBar: _selectedIndex == 0
           ? AppBar(
-              title: const Text('Cookpad Egypt'),
+              title: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      gradient: AppColors.primaryGradient,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Text(
+                      '🍳',
+                      style: TextStyle(fontSize: 20),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  ShaderMask(
+                    shaderCallback: (bounds) => AppColors.primaryGradient.createShader(bounds),
+                    child: const Text(
+                      'Nom Nom Cook',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
               actions: [
                 IconButton(
                   icon: const Icon(Icons.notifications_outlined),
@@ -142,10 +198,29 @@ class _HomeScreenState extends State<HomeScreen> {
                     if (authProvider.currentUser?.isPremium == true) {
                       return Padding(
                         padding: const EdgeInsets.only(right: 8),
-                        child: Chip(
-                          label: const Text('Premium', style: TextStyle(fontSize: 12)),
-                          backgroundColor: Colors.amber,
-                          avatar: const Icon(Icons.star, size: 16),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: AppColors.premiumGradient,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.workspace_premium, size: 16, color: Colors.white),
+                              SizedBox(width: 4),
+                              Text(
+                                'Premium',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       );
                     }
@@ -157,44 +232,31 @@ class _HomeScreenState extends State<HomeScreen> {
           : null,
       body: IndexedStack(
         index: _selectedIndex,
-        children: screens,
+        children: _navItems.map((item) => item.screen).toList(),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
+      bottomNavigationBar: CustomBottomNav(
+        items: _navItems,
         currentIndex: _selectedIndex,
         onTap: (index) {
           setState(() {
             _selectedIndex = index;
           });
         },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search_outlined),
-            activeIcon: Icon(Icons.search),
-            label: 'Search',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.add_circle_outline),
-            activeIcon: Icon(Icons.add_circle),
-            label: 'Create',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bookmark_outline),
-            activeIcon: Icon(Icons.bookmark),
-            label: 'Saved',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
       ),
+      floatingActionButton: _selectedIndex == 0
+          ? FloatingActionButton.extended(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const RecipeCreateScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.add),
+              label: const Text('Create Recipe'),
+            )
+          : null,
     );
   }
 }

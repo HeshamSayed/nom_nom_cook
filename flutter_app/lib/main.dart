@@ -3,13 +3,12 @@ import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
-import 'core/app_constants.dart';
-import 'core/theme.dart';
+import 'theme/app_theme.dart';
 import 'providers/auth_provider.dart';
 import 'providers/recipe_provider.dart';
 import 'providers/user_provider.dart';
 import 'providers/subscription_provider.dart';
-import 'screens/splash_screen.dart';
+import 'screens/splash/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,11 +16,11 @@ void main() async {
   // Initialize Hive for offline storage
   await Hive.initFlutter();
 
-  runApp(const CookpadEgyptApp());
+  runApp(const NomNomCookApp());
 }
 
-class CookpadEgyptApp extends StatelessWidget {
-  const CookpadEgyptApp({super.key});
+class NomNomCookApp extends StatelessWidget {
+  const NomNomCookApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +34,7 @@ class CookpadEgyptApp extends StatelessWidget {
       child: Consumer<AuthProvider>(
         builder: (context, authProvider, _) {
           return MaterialApp(
-            title: 'Cookpad Egypt',
+            title: 'Nom Nom Cook',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
