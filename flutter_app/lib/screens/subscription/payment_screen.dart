@@ -3,12 +3,14 @@ import 'package:provider/provider.dart';
 import '../../providers/subscription_provider.dart';
 
 class PaymentScreen extends StatefulWidget {
+  final int planId;
   final String planType;
   final String planTitle;
   final String price;
 
   const PaymentScreen({
     super.key,
+    required this.planId,
     required this.planType,
     required this.planTitle,
     required this.price,
@@ -456,7 +458,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
       );
 
       // Create subscription in backend
-      await subscriptionProvider.subscribe(widget.planType);
+      final success = await subscriptionProvider.subscribe(widget.planId);
+
+      if (!success) {
+        throw Exception(subscriptionProvider.error ?? 'Failed to create subscription');
+      }
 
       if (!mounted) return;
 

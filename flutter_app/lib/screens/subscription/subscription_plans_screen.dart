@@ -3,8 +3,24 @@ import 'package:provider/provider.dart';
 import '../../providers/subscription_provider.dart';
 import 'payment_screen.dart';
 
-class SubscriptionPlansScreen extends StatelessWidget {
+class SubscriptionPlansScreen extends StatefulWidget {
   const SubscriptionPlansScreen({super.key});
+
+  @override
+  State<SubscriptionPlansScreen> createState() => _SubscriptionPlansScreenState();
+}
+
+class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Fetch plans and current subscription
+    Future.microtask(() {
+      final provider = context.read<SubscriptionProvider>();
+      provider.fetchPlans();
+      provider.fetchCurrentSubscription();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -178,48 +194,53 @@ class SubscriptionPlansScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Individual Plan
-            _buildPlanCard(
-              context,
-              planType: 'individual',
-              title: 'Individual',
-              price: 'EGP 29',
-              period: '/month',
-              trialText: '2 months FREE',
-              features: [
-                '2 months FREE trial',
-                'All premium features',
-                '1 user account',
-                'Unlimited recipes',
-                'Ad-free experience',
-                'Priority support',
-              ],
-              isRecommended: true,
-              currentPlan: currentPlan?.planType,
-            ),
+            // Dynamic Plan Cards from Backend
+            if (subscriptionProvider.isLoading)
+              const Center(child: CircularProgressIndicator())
+            else if (subscriptionProvider.plans.isEmpty)
+              const Center(child: Text('No plans available'))
+            else
+              ...subscriptionProvider.plans.map((plan) {
+                final isRecommended = plan.planType == 'individual';
+                final trialText = plan.trialPeriodDays > 0
+                    ? '${(plan.trialPeriodDays / 30).round()} months FREE'
+                    : null;
 
-            const SizedBox(height: 16),
+                final features = <String>[
+                  if (plan.trialPeriodDays > 0)
+                    '${(plan.trialPeriodDays / 30).round()} months FREE trial',
+                  'All premium features',
+                  if (plan.maxFamilyMembers == 1)
+                    '1 user account'
+                  else
+                    'Up to ${plan.maxFamilyMembers} family members',
+                  'Unlimited recipes',
+                  if (plan.isAdFree) 'Ad-free experience',
+                  if (plan.hasExclusiveContent) 'Exclusive content',
+                  'Priority support',
+                  if (plan.maxFamilyMembers > 1) ...[
+                    'Shared meal plans',
+                    'Combined shopping lists',
+                    'Family recipe collections',
+                  ],
+                ];
 
-            // Family Plan
-            _buildPlanCard(
-              context,
-              planType: 'family',
-              title: 'Family',
-              price: 'EGP 79',
-              period: '/month',
-              trialText: '2 months FREE',
-              features: [
-                '2 months FREE trial',
-                'All premium features',
-                'Up to 6 family members',
-                'Shared meal plans',
-                'Combined shopping lists',
-                'Family recipe collections',
-                'Priority support',
-              ],
-              isRecommended: false,
-              currentPlan: currentPlan?.planType,
-            ),
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: _buildPlanCard(
+                    context,
+                    planId: plan.id,
+                    planType: plan.planType,
+                    title: plan.name,
+                    price: 'EGP ${plan.priceEgp.toStringAsFixed(0)}',
+                    period: '/month',
+                    trialText: trialText,
+                    features: features,
+                    isRecommended: isRecommended,
+                    currentPlan: currentPlan?.planType,
+                  ),
+                );
+              }).toList(),
 
             const SizedBox(height: 24),
 
@@ -315,6 +336,7 @@ class SubscriptionPlansScreen extends StatelessWidget {
 
   Widget _buildPlanCard(
     BuildContext context, {
+    required int planId,
     required String planType,
     required String title,
     required String price,
@@ -469,6 +491,7 @@ class SubscriptionPlansScreen extends StatelessWidget {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => PaymentScreen(
+                                  planId: planId,
                                   planType: planType,
                                   planTitle: title,
                                   price: price,
