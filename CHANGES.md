@@ -2,6 +2,44 @@
 
 ## Latest Changes (November 2024)
 
+### 🎉 NEW: 2-Month Free Trial Added!
+
+**What's New:**
+- **60-Day Free Trial** for all new users on both Individual and Family plans
+- **Zero payment** required during trial period
+- **Full access** to all premium features during trial
+- **Cancel anytime** during trial with no charges
+- Automatic conversion to paid subscription after trial ends
+
+**Backend Updates:**
+- Added `trial_period_days` field to `SubscriptionPlan` model (default: 60 days)
+- Updated subscription creation logic to detect new users and apply trial
+- Trial users get `status='trialing'` during trial period
+- Payment amount is $0 during trial
+- Trial end date tracked in `trial_end_date` field
+- Management command `create_subscription_plans` to initialize plans with trial
+
+**Frontend Updates:**
+- **Prominent Free Trial Banner** at top of subscription plans screen
+- **"2 months FREE" badge** on each plan card
+- **Green gradient trial badge** with gift icon
+- Button text changes to **"Start Free Trial"** for new users
+- Pricing shows **"Then EGP XX/month"** to clarify trial is free first
+- Updated Terms & Conditions with trial information
+- Feature list includes "2 months FREE trial" as first item
+
+**How it Works:**
+1. New user subscribes to Individual or Family plan
+2. Gets 60 days of free trial (no payment)
+3. Full access to all premium features
+4. Can cancel anytime during trial
+5. After 60 days, subscription converts to paid (EGP 29 or 79)
+6. Returning users (who had previous subscriptions) don't get trial again
+
+---
+
+## Previous Changes (November 2024)
+
 ### Major Features Added
 
 #### 1. **Monthly Challenges System**

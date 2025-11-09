@@ -13,7 +13,7 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
             'plan_type', 'billing_period', 'price_egp', 'price_usd',
             'max_saved_recipes', 'max_family_members', 'has_advanced_search',
             'has_nutritional_info', 'has_popular_recipes', 'has_exclusive_content',
-            'has_offline_access', 'is_ad_free', 'is_active'
+            'has_offline_access', 'is_ad_free', 'trial_period_days', 'is_active'
         ]
 
 

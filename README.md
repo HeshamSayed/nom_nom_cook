@@ -23,6 +23,7 @@ Nom Nom Cook is a vibrant recipe-sharing platform designed for food enthusiasts 
 
 ### Key Highlights
 
+- **2 Months FREE Trial** - Try all premium features free for 60 days!
 - **Monthly Cooking Challenges** - Compete with themed challenges
 - **Community Voting System** - Vote for your favorite recipes
 - **Automatic Winner Selection** - Winners chosen based on community votes
@@ -66,7 +67,8 @@ Nom Nom Cook is a vibrant recipe-sharing platform designed for food enthusiasts 
 - ✅ Challenge phases: upcoming → active → voting → completed
 - ✅ Winner announcement screen
 
-#### Premium Features
+#### Premium Features 🌟
+- ✅ **2 Months FREE Trial** - No payment required!
 - ✅ Ad-free experience
 - ✅ Unlimited recipe saves and folders
 - ✅ Unlimited meal planning
@@ -74,6 +76,7 @@ Nom Nom Cook is a vibrant recipe-sharing platform designed for food enthusiasts 
 - ✅ Exclusive content access
 - ✅ Priority support
 - ✅ Offline access
+- ✅ Cancel anytime during trial
 
 #### Egyptian Market Specific
 - ✅ Arabic/English bilingual support
@@ -488,9 +491,13 @@ python manage.py process_challenges
 ### Premium Subscription Model
 
 ```python
-# EGP 29/month individual plan
-# EGP 79/month family plan (up to 6 members)
+# 2 MONTHS FREE TRIAL for new users!
+# Trial period: 60 days (no payment required)
+# After trial:
+#   - Individual: EGP 29/month (1 user)
+#   - Family: EGP 79/month (up to 6 members)
 # Features: Unlimited saves, ad-free, exclusive content, priority support
+# Cancel anytime during trial - no charges
 ```
 
 ### Real-time Chat

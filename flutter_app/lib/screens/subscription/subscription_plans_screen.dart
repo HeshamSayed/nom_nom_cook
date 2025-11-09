@@ -112,6 +112,63 @@ class SubscriptionPlansScreen extends StatelessWidget {
 
             const SizedBox(height: 32),
 
+            // Free Trial Banner
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Theme.of(context).colorScheme.primary,
+                    Theme.of(context).colorScheme.secondary,
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.celebration,
+                      color: Colors.white,
+                      size: 32,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          '🎉 2 MONTHS FREE TRIAL',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Try all premium features free for 60 days!',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
+
             // Subscription Plans
             Text(
               'Choose Your Plan',
@@ -128,7 +185,9 @@ class SubscriptionPlansScreen extends StatelessWidget {
               title: 'Individual',
               price: 'EGP 29',
               period: '/month',
+              trialText: '2 months FREE',
               features: [
+                '2 months FREE trial',
                 'All premium features',
                 '1 user account',
                 'Unlimited recipes',
@@ -148,7 +207,9 @@ class SubscriptionPlansScreen extends StatelessWidget {
               title: 'Family',
               price: 'EGP 79',
               period: '/month',
+              trialText: '2 months FREE',
               features: [
+                '2 months FREE trial',
                 'All premium features',
                 'Up to 6 family members',
                 'Shared meal plans',
@@ -174,6 +235,11 @@ class SubscriptionPlansScreen extends StatelessWidget {
                       content: const SingleChildScrollView(
                         child: Text(
                           'Subscription Terms:\n\n'
+                          '• New users get 2 months FREE trial\n'
+                          '• Trial starts immediately upon subscription\n'
+                          '• No payment required during trial period\n'
+                          '• Cancel anytime during trial - no charges\n'
+                          '• After trial, EGP 29/month (Individual) or EGP 79/month (Family)\n'
                           '• Subscriptions automatically renew unless cancelled\n'
                           '• Cancel anytime from your account settings\n'
                           '• Refunds available within 7 days of purchase\n'
@@ -253,6 +319,7 @@ class SubscriptionPlansScreen extends StatelessWidget {
     required String title,
     required String price,
     required String period,
+    String? trialText,
     required List<String> features,
     required bool isRecommended,
     required String? currentPlan,
@@ -308,9 +375,57 @@ class SubscriptionPlansScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 16),
+
+                // Trial Badge
+                if (trialText != null && !isCurrentPlan) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.green.shade400,
+                          Colors.green.shade600,
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.card_giftcard,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          trialText,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
+                    if (!isCurrentPlan && trialText != null) ...[
+                      Text(
+                        'Then ',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
                     Text(
                       price,
                       style: Theme.of(context).textTheme.headlineMedium?.copyWith(
@@ -368,7 +483,9 @@ class SubscriptionPlansScreen extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      isCurrentPlan ? 'Current Plan' : 'Subscribe Now',
+                      isCurrentPlan
+                        ? 'Current Plan'
+                        : (trialText != null ? 'Start Free Trial' : 'Subscribe Now'),
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,

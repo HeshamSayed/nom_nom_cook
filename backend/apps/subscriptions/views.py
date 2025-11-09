@@ -69,22 +69,40 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        # Check if user is eligible for free trial (new user who never subscribed)
+        has_previous_subscription = self.get_queryset().exists()
+        is_trial = not has_previous_subscription and plan.trial_period_days > 0
+
         # Calculate subscription dates
         start_date = timezone.now()
-        if plan.billing_period == 'monthly':
-            end_date = start_date + timedelta(days=30)
-        elif plan.billing_period == 'quarterly':
-            end_date = start_date + timedelta(days=90)
-        else:  # yearly
-            end_date = start_date + timedelta(days=365)
+
+        if is_trial:
+            # User gets free trial first
+            trial_end_date = start_date + timedelta(days=plan.trial_period_days)
+            # After trial, subscription continues for the billing period
+            if plan.billing_period == 'monthly':
+                end_date = trial_end_date + timedelta(days=30)
+            elif plan.billing_period == 'quarterly':
+                end_date = trial_end_date + timedelta(days=90)
+            else:  # yearly
+                end_date = trial_end_date + timedelta(days=365)
+        else:
+            trial_end_date = None
+            if plan.billing_period == 'monthly':
+                end_date = start_date + timedelta(days=30)
+            elif plan.billing_period == 'quarterly':
+                end_date = start_date + timedelta(days=90)
+            else:  # yearly
+                end_date = start_date + timedelta(days=365)
 
         # Create subscription
         subscription = Subscription.objects.create(
             user=request.user,
             plan=plan,
-            status='active',
+            status='trialing' if is_trial else 'active',
             start_date=start_date,
-            end_date=end_date
+            end_date=end_date,
+            trial_end_date=trial_end_date
         )
 
         # Apply coupon if provided
@@ -128,7 +146,11 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
                 pass  # Continue without discount
 
         # Calculate final amount
-        final_amount = max(0, float(plan.price_egp) - float(discount_amount))
+        # If on trial, payment is 0 for now
+        if is_trial:
+            final_amount = 0
+        else:
+            final_amount = max(0, float(plan.price_egp) - float(discount_amount))
 
         # Create payment record
         import uuid

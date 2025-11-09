@@ -42,6 +42,9 @@ class SubscriptionPlan(models.Model):
     has_offline_access = models.BooleanField(_('offline access'), default=True)
     is_ad_free = models.BooleanField(_('ad-free'), default=True)
 
+    # Trial
+    trial_period_days = models.PositiveIntegerField(_('trial period (days)'), default=60, help_text=_('Free trial period in days (default: 60 days / 2 months)'))
+
     # Stripe integration
     stripe_price_id = models.CharField(_('Stripe price ID'), max_length=255, blank=True)
 
